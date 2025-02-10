@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pixel Love Story</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sans&display=swap');
+        body {
+            background-color: black;
+            text-align: center;
+            color: white;
+            font-family: 'Sans', sans-serif;
+        }
+        canvas {
+            border: 3px solid white;
+            display: block;
+            margin: 20px auto;
+            background: url('background-pixel.png') no-repeat center center;
+            background-size: cover;
+        }
+        .buttons {
+            display: none;
+            margin-top: 20px;
+        }
+        .buttons button {
+            font-size: 20px;
+            padding: 10px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Collect All the blobs! ❤️</h1>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <p id="message"></p>
+    <div class="buttons" id="buttons">
+        <button onclick="response('yes')">YES 💕</button>
+        <button onclick="response('no')">NO 💔</button>
+    </div>
+    <audio id="bgMusic" src="background-music.mp3" loop></audio>
+    <audio id="heartSound" src="collect-heart.mp3"></audio>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const bgMusic = document.getElementById("bgMusic");
+        const heartSound = document.getElementById("heartSound");
+        const message = document.getElementById("message");
+        const buttons = document.getElementById("buttons");
+        
+        let player = { x: 50, y: 300, width: 40, height: 40, speed: 5 };
+        let hearts = [
+            { x: 200, y: 250, collected: false },
+            { x: 400, y: 200, collected: false },
+            { x: 600, y: 250, collected: false },
+            { x: 300, y: 150, collected: false },
+            { x: 500, y: 100, collected: false },
+            { x: 700, y: 300, collected: false }
+        ];
+        let allCollected = false;
+        let audioPlayed = false;
+
+        function drawPlayer() {
+            ctx.fillStyle = "pink";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function drawHearts() {
+            hearts.forEach(heart => {
+                if (!heart.collected) {
+                    ctx.fillStyle = "red";
+                    ctx.beginPath();
+                    ctx.arc(heart.x, heart.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer();
+            drawHearts();
+            checkCollision();
+            if (allCollected) {
+                message.innerText = "Will you be mine? 💖";
+                buttons.style.display = "block";
+            }
+            requestAnimationFrame(update);
+        }
+
+        function checkCollision() {
+            hearts.forEach(heart => {
+                if (
+                    player.x < heart.x + 15 &&
+                    player.x + player.width > heart.x &&
+                    player.y < heart.y + 15 &&
+                    player.y + player.height > heart.y
+                ) {
+                    if (!heart.collected) {
+                        heart.collected = true;
+                        heartSound.play();
+                    }
+                }
+            });
+            allCollected = hearts.every(heart => heart.collected);
+        }
+
+        function response(answer) {
+            if (answer === 'yes') {
+                message.innerText = "I love you cutie!, we'll go on a date once you're back!";
+            } else {
+                message.innerText = "wrong answer, try again!";
+            }
+            buttons.style.display = "none";
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight") player.x += player.speed;
+            if (e.key === "ArrowLeft") player.x -= player.speed;
+            if (e.key === "ArrowUp") player.y -= player.speed;
+            if (e.key === "ArrowDown") player.y += player.speed;
+        });
+
+        document.addEventListener("touchstart", handleTouchStart, false);
+        document.addEventListener("touchmove", handleTouchMove, false);
+
+        let xDown = null;
+        let yDown = null;
+
+        function handleTouchStart(evt) {
+            if (!audioPlayed) {
+                bgMusic.play();
+                audioPlayed = true;
+            }
+            const firstTouch = evt.touches[0];
+            xDown = firstTouch.clientX;
+            yDown = firstTouch.clientY;
+        }
+
+        function handleTouchMove(evt) {
+            if (!xDown || !yDown) {
+                return;
+            }
+
+            let xUp = evt.touches[0].clientX;
+            let yUp = evt.touches[0].clientY;
+
+            let xDiff = xDown - xUp;
+            let yDiff = yDown - yUp;
+
+            if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                if (xDiff > 0) {
+                    player.x -= player.speed; // Swipe left
+                } else {
+                    player.x += player.speed; // Swipe right
+                }
+            } else {
+                if (yDiff > 0) {
+                    player.y -= player.speed; // Swipe up
+                } else {
+                    player.y += player.speed; // Swipe down
+                }
+            }
+            xDown = null;
+            yDown = null;
+        }
+
+        document.addEventListener("click", () => {
+            if (!audioPlayed) {
+                bgMusic.play();
+                audioPlayed = true;
+            }
+        });
+
+        update();
+    </script>
+</body>
+</html>
